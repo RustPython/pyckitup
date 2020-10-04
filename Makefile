@@ -1,4 +1,4 @@
 default:
-	cargo-web deploy --release
+	cd wasm && cargo-web deploy --release
 	cargo build
 	cargo build --release

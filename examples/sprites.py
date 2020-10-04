@@ -31,6 +31,6 @@ def draw(state):
     qs.anim("crab-left", rect=[p0, p1], z=4)
 
 def event(state, event):
-    if event["event"] == "mouse_moved":
-        state["p0"][0] = event["x"]
-        state["p0"][1] = event["y"]
+    if event.event == "mouse_moved":
+        state["p0"][0] = event.x
+        state["p0"][1] = event.y

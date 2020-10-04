@@ -1,0 +1,24 @@
+[package]
+name = "pyckitup-core"
+version = "0.1.0"
+authors = ["Ricky Han <rickylqhan@gmail.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+num-traits = "0.2"
+rustpython-compiler = { git = "https://github.com/RustPython/RustPython" }
+scoped-tls = "1.0"
+once_cell = "1.4"
+itertools = "0.9"
+
+[dependencies.rustpython-vm]
+git = "https://github.com/RustPython/RustPython"
+default-features = false
+features = ["compile-parse", "freeze-stdlib"]
+
+[dependencies.quicksilver]
+version = "0.3"
+default-features = false
+features = ["fonts", "sounds", "saving"]
+

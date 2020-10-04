@@ -1,0 +1,11 @@
+[package]
+name = "pyckitup-bin"
+version = "0.1.0"
+authors = ["Noah <33094578+coolreader18@users.noreply.github.com>"]
+edition = "2018"
+
+[dependencies]
+pyckitup-core = { path = "../core" }
+clap = "2"
+fs_extra = "1.2"
+walkdir = "2"

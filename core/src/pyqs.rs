@@ -464,7 +464,7 @@ mod qs {
 
         let style = FontStyle::new(args.pt.to_f32(), args.color.0);
 
-        let mut exists = false;
+        let mut exists = true;
         let res = WINDOW.with(|w| {
             SPRITES.with(|r| {
                 r.borrow_mut().execute(|resources| {

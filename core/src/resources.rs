@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{hash_map, HashMap};
 
 // imgs, anims, sounds
 #[derive(Clone, Default)]
@@ -15,9 +15,7 @@ pub struct Resources {
     pub imgs: HashMap<String, Image>,
     pub anims: HashMap<String, Animation>,
     pub sounds: HashMap<String, Sound>,
-    pub fonts: HashMap<String, Font>,
-    #[allow(unused)]
-    rendered_strings: HashMap<String, HashMap<String, Image>>,
+    pub fonts: HashMap<String, (Font, HashMap<String, Image>)>,
 }
 
 impl Resources {
@@ -60,25 +58,29 @@ impl Resources {
                 .into_iter()
                 .map(|(name, src)| Font::load(src).map(move |font| (name, font))),
         )
-        .map(|vec| vec.into_iter().collect());
+        .map(|vec| {
+            vec.into_iter()
+                .map(|(name, font)| (name, (font, HashMap::new())))
+                .collect::<HashMap<_, _>>()
+        });
 
-        anim_futs.join4(img_futs, sound_futs, font_futs).map(
-            |(anims, imgs, sounds, fonts_supplied): (_, _, _, HashMap<String, Font>)| {
-                let mut fonts = HashMap::new();
-                fonts.insert(
-                    "default".to_owned(),
-                    Font::from_slice(include_bytes!("../../include/VGATypewriter.ttf")).unwrap(),
-                );
-                fonts.extend(fonts_supplied);
+        anim_futs
+            .join4(img_futs, sound_futs, font_futs)
+            .map(|(anims, imgs, sounds, mut fonts)| {
+                fonts.entry("default".to_owned()).or_insert_with(|| {
+                    (
+                        Font::from_slice(include_bytes!("../../include/VGATypewriter.ttf"))
+                            .unwrap(),
+                        HashMap::new(),
+                    )
+                });
                 Resources {
                     imgs,
                     anims,
                     sounds,
                     fonts,
-                    rendered_strings: HashMap::new(),
                 }
-            },
-        )
+            })
     }
 
     pub fn get_img(&self, name: &str) -> Option<&Image> {
@@ -115,29 +117,23 @@ impl Resources {
         store_in_cache: bool,
     ) -> Result<Option<Cow<'a, Image>>> {
         let font_name = font_name.unwrap_or("default");
-        if store_in_cache {
-            let cached = self
-                .rendered_strings
-                .get_mut(font_name)
-                .and_then(|cache| cache.get_mut(s));
-            if let Some(ret) = cached {
-                return Ok(Some(Cow::Borrowed(ret)));
-            }
-        }
-        let font = match self.fonts.get(font_name) {
+
+        let (font, cache) = match self.fonts.get_mut(font_name) {
             Some(f) => f,
             None => return Ok(None),
         };
-        let img = font.render(&s, &style)?;
+
+        let render = || font.render(s, &style);
+
         let ret = if store_in_cache {
-            todo!();
-        // let font_hm = rendered_strings
-        //     .entry(font_name.to_owned())
-        //     .or_insert(HashMap::new());
-        // let ret = font_hm.entry(s.to_owned()).or_insert(img);
-        // Cow::Borrowed(ret)
+            // TODO: don't clone the string here
+            let cached = match cache.entry(s.to_owned()) {
+                hash_map::Entry::Occupied(o) => o.into_mut(),
+                hash_map::Entry::Vacant(v) => v.insert(render()?),
+            };
+            Cow::Borrowed(cached)
         } else {
-            Cow::Owned(img)
+            Cow::Owned(render()?)
         };
         Ok(Some(ret))
     }

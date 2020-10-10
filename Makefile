@@ -1,4 +1,3 @@
 default:
-	cd wasm && cargo-web deploy --release
-	cargo build
-	cargo build --release
+	cd wasm && yarn webpack
+	cargo build --release -p pyckitup

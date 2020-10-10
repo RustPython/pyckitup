@@ -1,5 +1,4 @@
 pub use std::cell::RefCell;
-pub use std::rc::Rc;
 
 pub use num_traits::ToPrimitive;
 pub use rustpython_vm::pyobject::{ItemProtocol, TypeProtocol};
@@ -27,6 +26,7 @@ pub use quicksilver::{
 pub use rustpython_compiler::compile;
 pub use rustpython_vm::{
     common::borrow::BorrowValue,
+    common::rc::PyRc,
     exceptions::PyBaseExceptionRef,
     function::{OptionalArg, PyFuncArgs},
     obj::{

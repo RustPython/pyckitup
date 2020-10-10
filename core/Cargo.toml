@@ -9,7 +9,6 @@ license = "MIT"
 num-traits = "0.2"
 rustpython-compiler = { git = "https://github.com/RustPython/RustPython" }
 scoped-tls = "1.0"
-once_cell = "1.4"
 itertools = "0.9"
 
 [dependencies.rustpython-vm]
@@ -18,7 +17,8 @@ default-features = false
 features = ["compile-parse", "freeze-stdlib"]
 
 [dependencies.quicksilver]
+path = "../../quicksilver"
 version = "0.3"
 default-features = false
-features = ["fonts", "sounds", "saving"]
+features = ["fonts", "sounds", "saving", "wasm-bindgen"]
 

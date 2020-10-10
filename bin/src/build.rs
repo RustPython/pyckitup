@@ -1,7 +1,12 @@
-use std::path::{Path, PathBuf};
-use walkdir::{DirEntry, WalkDir};
+use super::Size;
+use anyhow::Context;
+use rustpython_bytecode::bytecode::FrozenModule;
+use rustpython_compiler::compile;
+use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
 
-pub fn pyckitup_build() -> std::io::Result<()> {
+pub fn pyckitup_build(size: Size) -> anyhow::Result<()> {
     println!("Deploying to `./build`");
     if !Path::new("./run.py").exists() {
         println!("File `./run.py` doesn't exist. Doing nothing.");
@@ -10,69 +15,93 @@ pub fn pyckitup_build() -> std::io::Result<()> {
     let mut options = fs_extra::dir::CopyOptions::new();
     options.copy_inside = true;
     options.overwrite = true;
-    fs_extra::dir::copy("./static", "./build", &options).expect("Cannot copy folder");
-    std::fs::write(
-        "./build/pyckitup.js",
-        include_bytes!("../../target/deploy/pyckitup.js").to_vec(),
-    )?;
-    std::fs::write(
-        "./build/pyckitup.wasm",
-        include_bytes!("../../target/deploy/pyckitup.wasm").to_vec(),
-    )?;
+    fs_extra::dir::copy("./static", "./build", &options).context("Cannot copy folder")?;
+    let dist: include_dir::Dir = include_dir::include_dir!("../wasm/dist/");
+    let build_path = Path::new("build");
+    for f in dist.files() {
+        std::fs::write(build_path.join(f.path()), f.contents())?;
+    }
     std::fs::write(
         "./build/server.py",
-        include_bytes!("../../include/server.py").to_vec(),
+        include_bytes!("../../include/server.py"),
     )?;
 
     let template = include_str!("../../include/template.html");
-    let rendered = render(template);
+    let rendered = render(template, size)?;
     std::fs::write("./build/index.html", rendered)?;
     println!("Deployed!");
 
     Ok(())
 }
 
-fn is_py(entry: &DirEntry) -> bool {
-    entry
-        .file_name()
-        .to_str()
-        .map(|s| s.ends_with(".py"))
-        .unwrap_or(false)
+fn render(tmpl: &str, size: Size) -> anyhow::Result<String> {
+    let modules = compile_dir(Path::new("."), String::new(), compile::Mode::Exec)?;
+    let encoded_modules = bincode::serialize(&modules)?;
+
+    let Size(w, h) = size;
+
+    let code = format!(
+        "\
+console.log('Begin loading Python files...');
+window.pyckitupData = {{
+    frozenModules: new Uint8Array({modules:?}),
+    width: {w},
+    height: {h},
+}};
+console.log('Finished loading Python.');
+",
+        modules = encoded_modules,
+        w = w,
+        h = h,
+    );
+    Ok(tmpl.replacen("INSERTCODEHERE", &code, 1))
 }
 
-fn read_file(path: &PathBuf) -> String {
-    use std::io::Read;
-    let mut f = std::fs::File::open(&path).unwrap();
-    let mut buffer = String::new();
-    f.read_to_string(&mut buffer).unwrap();
-    buffer
-}
-
-fn render(tmpl: &str) -> String {
-    let mut files = vec![];
-    for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
-        if is_py(&entry)
-            && !entry.path().starts_with("./build")
-            && !entry.path().starts_with("./static")
-        {
-            files.push(entry.path().to_owned());
-            // println!("Python file: {:?}", entry);
+// from rustpython-derive
+fn compile_dir(
+    // &self,
+    path: &Path,
+    parent: String,
+    mode: compile::Mode,
+) -> anyhow::Result<HashMap<String, FrozenModule>> {
+    let mut code_map = HashMap::new();
+    let paths =
+        std::fs::read_dir(&path).with_context(|| format!("Error listing dir {:?}", path))?;
+    for path in paths {
+        let path = path.context("failed to list file")?;
+        let path = path.path();
+        let file_name = path
+            .file_name()
+            .unwrap()
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("Invalid UTF-8 in file name {:?}", path))?;
+        if path.is_dir() {
+            code_map.extend(compile_dir(
+                &path,
+                format!("{}{}", parent, file_name),
+                mode,
+            )?);
+        } else if file_name.ends_with(".py") {
+            let source = fs::read_to_string(&path)
+                .with_context(|| format!("Error reading file {:?}", path))?;
+            let stem = path.file_stem().unwrap().to_str().unwrap();
+            let is_init = stem == "__init__";
+            let module_name = if is_init {
+                parent.clone()
+            } else if parent.is_empty() {
+                stem.to_owned()
+            } else {
+                format!("{}.{}", parent, stem)
+            };
+            code_map.insert(
+                module_name.clone(),
+                FrozenModule {
+                    code: compile::compile(&source, mode, module_name, Default::default())
+                        .with_context(|| format!("Python compile error from {}", path.display()))?,
+                    package: is_init,
+                },
+            );
         }
     }
-
-    let mut code = String::new();
-
-    code.push_str("console.log('Begin loading Python files...');\n");
-    code.push_str("window.localStorage.clear();\n");
-    for (i, (content, path)) in files.into_iter().map(|i| (read_file(&i), i)).enumerate() {
-        let var_name = format!("file_{}", i);
-        code.push_str(&format!("let {} = `{}`;\n", var_name, content));
-        let path_stripped = path.as_path().strip_prefix("./").unwrap().to_str().unwrap();
-        code.push_str(&format!(
-            "window.localStorage.setItem(\"{}\", btoa({}));\n",
-            path_stripped, var_name
-        ));
-    }
-    code.push_str("console.log('Finished loading Python.');\n");
-    tmpl.to_owned().replace("INSERTCODEHERE", &code)
+    Ok(code_map)
 }

@@ -25,17 +25,11 @@ pub use quicksilver::{
 
 pub use rustpython_compiler::compile;
 pub use rustpython_vm::{
+    builtins::{PyDictRef, PyFloat, PyInt, PyStrRef},
     common::borrow::BorrowValue,
     common::rc::PyRc,
     exceptions::PyBaseExceptionRef,
-    function::{OptionalArg, PyFuncArgs},
-    obj::{
-        objbool,
-        objdict::PyDictRef,
-        objfloat,
-        objint::{self, PyInt},
-        objstr::PyStrRef,
-    },
+    function::{FuncArgs, OptionalArg},
     pyobject::{IntoPyObject, PyContext, PyObjectRef, PyResult, TryFromObject},
     stdlib::StdlibInitFunc,
     Interpreter, VirtualMachine,

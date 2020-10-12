@@ -1,7 +1,6 @@
 use crate::prelude::*;
 
 use rustpython_vm::function::FromArgs;
-use rustpython_vm::obj::{objfloat, objint};
 use rustpython_vm::pyobject::PyIterable;
 
 pub(crate) use qs::make_module;
@@ -99,11 +98,11 @@ struct PyNum(f64);
 impl TryFromObject for PyNum {
     fn try_from_object(vm: &VirtualMachine, obj: PyObjectRef) -> PyResult<Self> {
         let f = match_class!(match obj {
-            i @ objint::PyInt => i
+            i @ PyInt => i
                 .borrow_value()
                 .to_f64()
                 .ok_or_else(|| vm.new_type_error("int can't fit into f32".to_owned()))?,
-            f @ objfloat::PyFloat => f.to_f64(),
+            f @ PyFloat => f.to_f64(),
             _ => return Err(vm.new_type_error("expected a number".to_owned())),
         });
         Ok(PyNum(f))
@@ -381,7 +380,7 @@ mod qs {
     impl FromArgs for RectOrPoint {
         fn from_args(
             vm: &VirtualMachine,
-            args: &mut PyFuncArgs,
+            args: &mut FuncArgs,
         ) -> std::result::Result<Self, rustpython_vm::function::ArgumentError> {
             match (args.take_keyword("rect"), args.take_keyword("p0")) {
                 (Some(rect), None) => Ok(Self::Rect(PyRect::try_from_object(vm, rect)?.0)),

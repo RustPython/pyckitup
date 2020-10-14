@@ -17,8 +17,7 @@ default-features = false
 features = ["compile-parse", "freeze-stdlib"]
 
 [dependencies.quicksilver]
-path = "../../quicksilver"
 version = "0.3"
 default-features = false
-features = ["fonts", "sounds", "saving", "wasm-bindgen"]
+features = ["fonts", "sounds", "saving"]
 

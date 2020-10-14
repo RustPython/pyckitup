@@ -1,2 +1,5 @@
 [workspace]
 members = ["core", "bin", "wasm"]
+
+[patch.crates-io]
+stdweb = { git = "https://github.com/coolreader18/stdweb", branch = "import-wasm_bindgen" }

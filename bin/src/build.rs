@@ -4,14 +4,15 @@ use rustpython_bytecode::bytecode::FrozenModule;
 use rustpython_compiler::compile;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-pub fn pyckitup_build(size: Size) -> anyhow::Result<()> {
-    println!("Deploying to `./build`");
-    if !Path::new("./run.py").exists() {
-        println!("File `./run.py` doesn't exist. Doing nothing.");
-        std::process::exit(1);
-    }
+pub fn pyckitup_build(file: PathBuf, size: Size) -> anyhow::Result<()> {
+    eprintln!("Deploying to `./build`");
+    anyhow::ensure!(
+        file.exists(),
+        "Input file {:?} doesn't exist. Doing nothing.",
+        file
+    );
     let mut options = fs_extra::dir::CopyOptions::new();
     options.copy_inside = true;
     options.overwrite = true;
@@ -27,29 +28,33 @@ pub fn pyckitup_build(size: Size) -> anyhow::Result<()> {
     )?;
 
     let template = include_str!("../../include/template.html");
-    let rendered = render(template, size)?;
+    let rendered = render(template, &file, size)?;
     std::fs::write("./build/index.html", rendered)?;
     println!("Deployed!");
 
     Ok(())
 }
 
-fn render(tmpl: &str, size: Size) -> anyhow::Result<String> {
-    let modules = compile_dir(Path::new("."), String::new(), compile::Mode::Exec)?;
+fn render(tmpl: &str, entry: &Path, size: Size) -> anyhow::Result<String> {
+    let modules = compile_dir(entry.parent().unwrap(), String::new(), compile::Mode::Exec)?;
     let encoded_modules = bincode::serialize(&modules)?;
 
     let Size(w, h) = size;
 
     let code = format!(
         "\
-console.log('Begin loading Python files...');
 window.pyckitupData = {{
+    entryModule: {entry:?},
     frozenModules: new Uint8Array({modules:?}),
     width: {w},
     height: {h},
 }};
-console.log('Finished loading Python.');
 ",
+        entry = entry
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .context("file path is not utf8")?,
         modules = encoded_modules,
         w = w,
         h = h,

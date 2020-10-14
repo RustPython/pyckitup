@@ -16,6 +16,7 @@ use crate::prelude::*;
 
 scoped_thread_local!(pub static FNAME: Cell<PathBuf>);
 scoped_thread_local!(pub static FROZEN: Cell<HashMap<String, FrozenModule>>);
+scoped_thread_local!(pub static ENTRY: String);
 
 struct PickItUp {
     interp: Interpreter,
@@ -96,13 +97,14 @@ impl State for PickItUp {
                             Error::ContextError(format!("Error parsing Python code: {}", err))
                         })?,
                     None => {
-                        let code = vm
-                            .state
-                            .frozen
-                            .get("run")
-                            .expect("no 'run' frozen module")
-                            .code
-                            .clone();
+                        let code = ENTRY.with(|module| {
+                            vm.state
+                                .frozen
+                                .get(module.as_str())
+                                .expect("no entry frozen module")
+                                .code
+                                .clone()
+                        });
                         vm.ctx.new_code_object(code)
                     }
                 };

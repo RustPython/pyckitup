@@ -33,7 +33,7 @@ impl FromStr for Size {
 #[derive(StructOpt)]
 struct SizeArg {
     /// The size of the window in WxH format.
-    #[structopt(short, long, value_name = "SIZE", default_value = "Size(800, 600)")]
+    #[structopt(short, long, value_name = "SIZE", default_value = "800x600")]
     size: Size,
 }
 
@@ -54,6 +54,8 @@ enum Pyckitup {
     },
     /// Build for web
     Build {
+        #[structopt(default_value = "run.py", value_name = "FNAME", parse(from_os_str))]
+        filename: PathBuf,
         #[structopt(flatten)]
         size: SizeArg,
     },
@@ -75,7 +77,7 @@ fn main() -> anyhow::Result<()> {
             });
         }
         Pyckitup::Init { project } => init::pyckitup_init(project)?,
-        Pyckitup::Build { size } => build::pyckitup_build(size.size)?,
+        Pyckitup::Build { filename, size } => build::pyckitup_build(filename, size.size)?,
     }
     Ok(())
 }

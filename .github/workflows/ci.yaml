@@ -15,6 +15,10 @@ jobs:
           path: |
             target
             ~/.cargo/
+      - name: Install dependencies
+        run: |
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          cd wasm && yarn
       - name: Build pyckitup
         run: make
       - name: Build wasm demos

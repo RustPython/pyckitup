@@ -7,6 +7,6 @@ for example in examples/*.py; do
   if [[ $name = common ]] || [[ $name = __init__ ]]; then
     continue
   fi
-  target/release/pyckitup build "$example"
+  target/debug/pyckitup build "$example"
   mv build/index.html build/"$name".html
 done

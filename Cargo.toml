@@ -1,5 +1,22 @@
 [workspace]
-members = ["core", "bin", "wasm"]
+members = [".", "core", "wasm"]
+
+[package]
+name = "pyckitup"
+version = "0.1.0"
+authors = ["Noah <33094578+coolreader18@users.noreply.github.com>"]
+edition = "2018"
+
+[dependencies]
+pyckitup-core = { path = "core" }
+clap = "2"
+structopt = "0.3"
+fs_extra = "1.2"
+include_dir = "0.6"
+anyhow = "1.0"
+rustpython-bytecode = { git = "https://github.com/RustPython/RustPython" }
+rustpython-compiler = { git = "https://github.com/RustPython/RustPython" }
+bincode = "1.3"
 
 [patch.crates-io]
 stdweb = { git = "https://github.com/coolreader18/stdweb", branch = "import-wasm_bindgen" }

@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub fn pyckitup_build(file: PathBuf, output: PathBuf, size: Size) -> anyhow::Result<()> {
-    eprintln!("Deploying to `./build`");
+    eprintln!("Deploying to {:?}", output);
     anyhow::ensure!(
         file.exists(),
         "Input file {:?} doesn't exist. Doing nothing.",
@@ -19,17 +19,16 @@ pub fn pyckitup_build(file: PathBuf, output: PathBuf, size: Size) -> anyhow::Res
         content_only: true,
         ..Default::default()
     };
-    fs_extra::dir::copy("./static", "./build", &options).context("Cannot copy folder")?;
-    let dist: include_dir::Dir = include_dir::include_dir!("../wasm/dist/");
-    let build_path = Path::new("build");
+    fs_extra::dir::copy("./static", &output, &options).context("Cannot copy folder")?;
+    let dist: include_dir::Dir = include_dir::include_dir!("wasm/dist/");
     for f in dist.files() {
-        std::fs::write(build_path.join(f.path()), f.contents())?;
+        std::fs::write(output.join(f.path()), f.contents())?;
     }
 
-    let template = include_str!("../../include/template.html");
+    let template = include_str!("../include/template.html");
     let rendered = render(template, &file, size)?;
-    std::fs::write("./build/index.html", rendered)?;
-    println!("Deployed!");
+    std::fs::write(output.join("index.html"), rendered)?;
+    eprintln!("Deployed!");
 
     Ok(())
 }

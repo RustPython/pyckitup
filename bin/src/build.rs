@@ -6,26 +6,25 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub fn pyckitup_build(file: PathBuf, size: Size) -> anyhow::Result<()> {
+pub fn pyckitup_build(file: PathBuf, output: PathBuf, size: Size) -> anyhow::Result<()> {
     eprintln!("Deploying to `./build`");
     anyhow::ensure!(
         file.exists(),
         "Input file {:?} doesn't exist. Doing nothing.",
         file
     );
-    let mut options = fs_extra::dir::CopyOptions::new();
-    options.copy_inside = true;
-    options.overwrite = true;
+    std::fs::create_dir_all(&output)?;
+    let options = fs_extra::dir::CopyOptions {
+        overwrite: true,
+        content_only: true,
+        ..Default::default()
+    };
     fs_extra::dir::copy("./static", "./build", &options).context("Cannot copy folder")?;
     let dist: include_dir::Dir = include_dir::include_dir!("../wasm/dist/");
     let build_path = Path::new("build");
     for f in dist.files() {
         std::fs::write(build_path.join(f.path()), f.contents())?;
     }
-    std::fs::write(
-        "./build/server.py",
-        include_bytes!("../../include/server.py"),
-    )?;
 
     let template = include_str!("../../include/template.html");
     let rendered = render(template, &file, size)?;

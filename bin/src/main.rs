@@ -56,6 +56,8 @@ enum Pyckitup {
     Build {
         #[structopt(default_value = "run.py", value_name = "FNAME", parse(from_os_str))]
         filename: PathBuf,
+        #[structopt(default_value = "build", parse(from_os_str))]
+        output: PathBuf,
         #[structopt(flatten)]
         size: SizeArg,
     },
@@ -77,7 +79,11 @@ fn main() -> anyhow::Result<()> {
             });
         }
         Pyckitup::Init { project } => init::pyckitup_init(project)?,
-        Pyckitup::Build { filename, size } => build::pyckitup_build(filename, size.size)?,
+        Pyckitup::Build {
+            filename,
+            output,
+            size,
+        } => build::pyckitup_build(filename, output, size.size)?,
     }
     Ok(())
 }

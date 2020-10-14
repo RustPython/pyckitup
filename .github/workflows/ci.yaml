@@ -1,0 +1,28 @@
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    name: Deploy to GH Pages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache cargo dependencies
+        uses: actions/cache@v2
+        with:
+          key: deploy-${{ hashFiles('Cargo.lock') }}
+          path: |
+            target
+            ~/.cargo/
+      - name: Build pyckitup
+        run: make
+      - name: Build wasm demos
+        run: bash build_examples.sh
+      - name: Add public html etc
+        run: cp public/* build/
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build

@@ -13,11 +13,10 @@ pub fn pyckitup_init(project_name: PathBuf) -> std::io::Result<()> {
         "Initializing pyckitup project in directory `./{}`",
         project_name.display()
     );
-    std::fs::create_dir(&project_name)?;
-    std::fs::create_dir(project_name.join("static"))?;
+    std::fs::create_dir_all(project_name.join("static"))?;
     std::fs::write(
         project_name.join("static/click.wav"),
-        include_bytes!("../../include/click.wav"),
+        include_bytes!("../../static/click.wav"),
     )?;
     std::fs::write(
         project_name.join("run.py"),

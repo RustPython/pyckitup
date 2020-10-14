@@ -7,8 +7,12 @@ version = "0.1.0"
 authors = ["Noah <33094578+coolreader18@users.noreply.github.com>"]
 edition = "2018"
 
+[features]
+default = ["run-desktop"]
+run-desktop = ["pyckitup-core"]
+
 [dependencies]
-pyckitup-core = { path = "core" }
+pyckitup-core = { path = "core", optional = true }
 clap = "2"
 structopt = "0.3"
 fs_extra = "1.2"

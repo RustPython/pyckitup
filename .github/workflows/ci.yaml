@@ -20,7 +20,9 @@ jobs:
           curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
           cd wasm && yarn
       - name: Build pyckitup
-        run: make
+        run: |
+          (cd wasm && yarn webpack)
+          cargo build --no-default-features
       - name: Build wasm demos
         run: bash build_examples.sh
       - name: Add public html etc

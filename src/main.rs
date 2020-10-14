@@ -40,6 +40,7 @@ struct SizeArg {
 #[derive(StructOpt)]
 #[structopt(name = "pickitup")]
 enum Pyckitup {
+    #[cfg(feature = "run-desktop")]
     Run {
         #[structopt(default_value = "run.py", value_name = "FNAME", parse(from_os_str))]
         filename: PathBuf,
@@ -66,6 +67,7 @@ enum Pyckitup {
 fn main() -> anyhow::Result<()> {
     let opts = Pyckitup::from_args();
     match opts {
+        #[cfg(feature = "run-desktop")]
         Pyckitup::Run { filename, size } => {
             if !filename.exists() {
                 println!("File `./run.py` doesn't exist. Doing nothing.");

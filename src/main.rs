@@ -74,10 +74,13 @@ fn main() -> anyhow::Result<()> {
                 std::process::exit(1);
             }
 
-            let Size(w, h) = size.size;
+            let Size(width, height) = size.size;
 
-            pyckitup_core::FNAME.set(&filename.into(), || {
-                pyckitup_core::run(w, h);
+            pyckitup_core::run(pyckitup_core::InitOptions {
+                width,
+                height,
+                filename: Some(filename),
+                ..Default::default()
             });
         }
         Pyckitup::Init { project } => init::pyckitup_init(project)?,

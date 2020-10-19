@@ -7,16 +7,10 @@ mod pyqs;
 mod resources;
 
 use rustpython_vm::{bytecode::FrozenModule, PySettings};
-use scoped_tls::scoped_thread_local;
-use std::cell::Cell;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use crate::prelude::*;
-
-scoped_thread_local!(pub static FNAME: Cell<PathBuf>);
-scoped_thread_local!(pub static FROZEN: Cell<HashMap<String, FrozenModule>>);
-scoped_thread_local!(pub static ENTRY: String);
 
 struct PickItUp {
     interp: Interpreter,
@@ -45,10 +39,15 @@ impl PickItUp {
     fn with_window_ptr<R>(&self, window: &mut Window, f: impl FnOnce() -> R) -> R {
         WindowHandle::set(window, || SPRITES.set(&self.sprites, f))
     }
-}
 
-impl State for PickItUp {
-    fn new() -> Result<Self> {
+    fn new(opts: InitOptions) -> Result<Self> {
+        let InitOptions {
+            filename,
+            frozen,
+            entry_module,
+            ..
+        } = opts;
+
         let mut path_list = Vec::new();
         let (source, code_path) = if cfg!(target_arch = "wasm32") {
             (None, "<qs>".to_owned())
@@ -61,8 +60,7 @@ impl State for PickItUp {
                 &dir
             };
 
-            let fname = FNAME.with(|fname| fname.take());
-            let code_path = dir.join(&fname);
+            let code_path = dir.join(filename.as_ref().unwrap());
             let parent_dir = code_path.parent().unwrap().to_str().unwrap();
             path_list.push(parent_dir.to_owned());
             let s = std::fs::read_to_string(&code_path)
@@ -78,8 +76,7 @@ impl State for PickItUp {
             state
                 .stdlib_inits
                 .insert(MOD_NAME.to_owned(), Box::new(pyqs::make_module));
-            if FROZEN.is_set() {
-                let frozen = FROZEN.with(|f| f.take());
+            if let Some(frozen) = frozen {
                 state.frozen.extend(frozen);
             }
             if cfg!(target_arch = "wasm32") {
@@ -97,14 +94,13 @@ impl State for PickItUp {
                             Error::ContextError(format!("Error parsing Python code: {}", err))
                         })?,
                     None => {
-                        let code = ENTRY.with(|module| {
-                            vm.state
-                                .frozen
-                                .get(module.as_str())
-                                .expect("no entry frozen module")
-                                .code
-                                .clone()
-                        });
+                        let code = vm
+                            .state
+                            .frozen
+                            .get(entry_module.as_deref().unwrap())
+                            .expect("no entry frozen module")
+                            .code
+                            .clone();
                         vm.ctx.new_code_object(code)
                     }
                 };
@@ -149,6 +145,13 @@ impl State for PickItUp {
             state,
             window_initialized: false,
         })
+    }
+}
+
+impl State for PickItUp {
+    fn new() -> Result<Self> {
+        // we use run_with instead of this new() function
+        unimplemented!()
     }
 
     fn event(&mut self, event: &Event, window: &mut Window) -> Result<()> {
@@ -274,6 +277,27 @@ fn event_to_py(vm: &VirtualMachine, event: &Event) -> Option<PyObjectRef> {
     Some(d)
 }
 
-pub fn run(w: i32, h: i32) {
-    quicksilver::prelude::run::<PickItUp>("pickitup", Vector::new(w, h), Settings::default());
+pub struct InitOptions {
+    pub width: i32,
+    pub height: i32,
+    pub filename: Option<PathBuf>,
+    pub frozen: Option<HashMap<String, FrozenModule>>,
+    pub entry_module: Option<String>,
+}
+impl Default for InitOptions {
+    fn default() -> Self {
+        InitOptions {
+            width: 800,
+            height: 600,
+            filename: None,
+            frozen: None,
+            entry_module: None,
+        }
+    }
+}
+
+pub fn run(opts: InitOptions) {
+    let size = Vector::new(opts.width, opts.height);
+    let settings = Settings::default();
+    quicksilver::lifecycle::run_with("pickitup", size, settings, || PickItUp::new(opts));
 }

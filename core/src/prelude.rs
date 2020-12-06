@@ -23,11 +23,11 @@ pub use quicksilver::{
     Error, Future, Result,
 };
 
-pub use rustpython_compiler::compile;
 pub use rustpython_vm::{
     builtins::{PyDictRef, PyFloat, PyInt, PyStrRef},
     common::borrow::BorrowValue,
     common::rc::PyRc,
+    compile,
     exceptions::PyBaseExceptionRef,
     function::{FuncArgs, OptionalArg},
     pyobject::{IntoPyObject, PyContext, PyObjectRef, PyResult, TryFromObject},

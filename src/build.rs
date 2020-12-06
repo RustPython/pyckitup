@@ -1,7 +1,7 @@
 use super::Size;
 use anyhow::Context;
 use rustpython_bytecode::bytecode::FrozenModule;
-use rustpython_compiler::compile;
+use rustpython_compiler as compile;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};

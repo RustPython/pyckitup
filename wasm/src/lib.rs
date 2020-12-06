@@ -1,5 +1,5 @@
 use rustpython_bytecode::bytecode;
-use rustpython_compiler::compile;
+use rustpython_compiler as compile;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 

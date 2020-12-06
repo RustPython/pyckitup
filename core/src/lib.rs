@@ -72,12 +72,9 @@ impl PickItUp {
             ..Default::default()
         };
         let interp = Interpreter::new_with_init(settings, |vm| {
-            let state = PyRc::get_mut(&mut vm.state).unwrap();
-            state
-                .stdlib_inits
-                .insert(MOD_NAME.to_owned(), Box::new(pyqs::make_module));
+            vm.add_native_module(MOD_NAME.to_owned(), Box::new(pyqs::make_module));
             if let Some(frozen) = frozen {
-                state.frozen.extend(frozen);
+                vm.add_frozen(frozen);
             }
             if cfg!(target_arch = "wasm32") {
                 rustpython_vm::InitParameter::Internal

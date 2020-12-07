@@ -12,6 +12,7 @@ scoped-tls = "1.0"
 itertools = "0.9"
 futures = "0.3"
 anyhow = "1.0"
+instant = { version = "0.1", features = ["wasm-bindgen"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rodio = "0.13"

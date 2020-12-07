@@ -8,10 +8,10 @@ mod resources;
 mod sound;
 
 use anyhow::Context;
+use instant::{Duration, Instant};
 use rustpython_vm::{bytecode::FrozenModule, PySettings};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, Instant};
 
 use crate::prelude::*;
 

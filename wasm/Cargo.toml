@@ -13,6 +13,7 @@ wasm-bindgen = "0.2"
 rustpython-bytecode = { git = "https://github.com/RustPython/RustPython" }
 rustpython-compiler = { git = "https://github.com/RustPython/RustPython" }
 bincode = "1.3"
+console_error_panic_hook = "0.1"
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false#["-O1"]

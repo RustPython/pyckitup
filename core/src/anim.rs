@@ -1,61 +1,32 @@
 use crate::prelude::*;
 
 pub struct Animation {
-    imgs: Vec<Image>,
+    image: Image,
     pub played: bool,
     nframes: usize,
     /// in seconds
     duration: f64,
-    pub current_t: f64,
-    frame_w: f32,
-    frame_h: f32,
+    current_t: f64,
+    pub frame_size: Vector,
 }
 
 impl Animation {
-    #[allow(unused)]
-    pub fn new(
-        src: &'static str,
-        nframes: usize,
-        duration: f64,
-    ) -> impl Future<Item = Self, Error = Error> {
-        load_file(src)
-            .map(|data| Image::from_bytes(data.as_slice()))
-            .map(move |sheet| Animation::from_image(sheet.unwrap(), nframes, duration))
-        // .and_then(result)
-    }
-
     pub fn from_image(image: Image, nframes: usize, duration: f64) -> Animation {
-        let frame_w = image.area().width() / nframes as f32;
-        let frame_h = image.area().height();
-
-        let mut imgs = Vec::new();
-        for i in 0..nframes {
-            let region = Rectangle::new(
-                Vector {
-                    x: i as f32 * frame_w,
-                    y: 0.,
-                },
-                Vector {
-                    x: frame_w,
-                    y: frame_h,
-                },
-            );
-            imgs.push(image.subimage(region));
-        }
+        let mut frame_size = image.size();
+        frame_size.x /= nframes as f32;
 
         Animation {
-            imgs,
+            image,
             played: false,
             nframes,
             duration,
             current_t: 0.,
-            frame_w,
-            frame_h,
+            frame_size,
         }
     }
 
-    pub fn update(&mut self, window: &mut Window) -> Result<()> {
-        self.current_t += window.update_rate() * 0.001;
+    pub fn update(&mut self, update_rate: f64) {
+        self.current_t += update_rate / 1000.0;
         if self.current_t >= self.duration {
             self.current_t -= self.duration
         }
@@ -63,46 +34,23 @@ impl Animation {
         if self.nth() == self.nframes - 1 {
             self.played = true;
         }
-
-        Ok(())
     }
 
     pub fn nth(&self) -> usize {
         let frame = (self.current_t / self.duration * self.nframes as f64).floor() as usize + 1;
-        let nth = frame % self.nframes;
-        nth
+        frame % self.nframes
     }
 
-    pub fn current_frame(&self) -> &Image {
-        let src = &self.imgs[self.nth()];
-        src
-    }
+    pub fn draw(&self, gfx: &mut Graphics, location: Rectangle) {
+        let n = self.nth();
 
-    #[allow(unused)]
-    pub fn draw(&self, window: &mut Window, pos_x: f32, pos_y: f32, scale: f32) {
-        if self.played {
-            return;
-        }
-        let src = &self.imgs[self.nth()];
+        let region = Rectangle::new(self.frame_size.x_comp() * n as f32, self.frame_size);
 
-        // let dest = Point2::new( pos_x, pos_y );
-        // let scale = Point2::new(5., 5.);
-
-        window.draw_ex(
-            &Rectangle::new(
-                Vector::new(pos_x, pos_y),
-                Vector::new(self.frame_w, self.frame_h),
-            ),
-            Img(&src),
-            Transform::scale(Vector::new(scale, scale)),
-            0,
-        );
-
-        // window.draw(&src.area().with_center((240., 135.)), Img(&src));
+        gfx.draw_subimage(&self.image, region, location);
     }
 
     #[allow(unused)]
-    pub fn play(&mut self) -> Result<()> {
+    pub fn play(&mut self) -> QsResult<()> {
         self.played = false;
         self.current_t = 0.;
         Ok(())

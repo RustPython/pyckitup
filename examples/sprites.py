@@ -28,7 +28,8 @@ def draw(state):
     p0 = state["p0"]
     p1 = state["p1"]
     transform = rotate(state["deg"])
-    qs.anim("crab-left", rect=[p0, p1], z=4)
+    # qs.clear(BLACK)
+    qs.anim("crab-left", rect=[p0, p1])
 
 def event(state, event):
     if event.event == "mouse_moved":

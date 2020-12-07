@@ -10,6 +10,8 @@ num-traits = "0.2"
 rustpython-compiler = { git = "https://github.com/RustPython/RustPython" }
 scoped-tls = "1.0"
 itertools = "0.9"
+futures = "0.3"
+anyhow = "1.0"
 
 [dependencies.rustpython-vm]
 git = "https://github.com/RustPython/RustPython"
@@ -17,7 +19,7 @@ default-features = false
 features = ["compile-parse", "freeze-stdlib"]
 
 [dependencies.quicksilver]
-version = "0.3"
+version = "0.4"
 default-features = false
-features = ["fonts", "sounds", "saving"]
+features = ["font", "ttf", "saving", "web-sys"]
 

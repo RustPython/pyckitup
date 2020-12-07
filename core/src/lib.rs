@@ -5,6 +5,7 @@ mod anim;
 mod prelude;
 mod pyqs;
 mod resources;
+mod sound;
 
 use anyhow::Context;
 use rustpython_vm::{bytecode::FrozenModule, PySettings};
@@ -165,8 +166,10 @@ impl PickItUp {
             self.interp.enter(|vm| -> anyhow::Result<()> {
                 if let Some(evt) = event_to_py(vm, event, state.get_mut()) {
                     STATE.set(state, || {
-                        vm.invoke(event_fn, vec![self.state.clone(), evt])
-                            .map_err(|e| handle_err(vm, e, "in event function"))
+                        SPRITES.set(&self.sprites, || {
+                            vm.invoke(event_fn, vec![self.state.clone(), evt])
+                                .map_err(|e| handle_err(vm, e, "in event function"))
+                        })
                     })?;
                 }
                 Ok(())

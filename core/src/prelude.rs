@@ -5,30 +5,15 @@ pub use rustpython_vm::pyobject::{ItemProtocol, TypeProtocol};
 
 pub use crate::anim::Animation;
 pub use crate::resources::{ResourceConfig, Resources};
-pub use quicksilver::{
-    geom::{Circle, Line, Rectangle, Transform, Triangle, Vector},
-    graphics::{Color, Image},
-    Timer, // lifecycle::{run, Asset, Settings, State, Window},
-};
+pub use crate::sound::Sound;
 
 pub use futures::prelude::*;
 
 pub use quicksilver::{
-    // combinators::{join_all, result},
-    geom::Shape,
-    graphics::{FontRenderer, Graphics, VectorFont},
-    // graphics::{Background::Img, Drawable, Font, FontStyle},
-    input::{Event, Key, MouseButton},
-    // lifecycle::Event,
-    load_file,
-    saving::*,
-    // sound::Sound,
-    // Error,
-    // Future,
-    Input,
-    QuicksilverError,
-    Result as QsResult,
-    Window,
+    geom::{Circle, Rectangle, Shape, Transform, Vector},
+    graphics::{Color, FontRenderer, Graphics, Image, VectorFont},
+    input::{Event, Input, Key, MouseButton},
+    load_file, QuicksilverError, Result as QsResult, Window,
 };
 
 pub use std::future::Future;

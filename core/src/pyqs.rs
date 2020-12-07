@@ -388,24 +388,15 @@ mod qs {
 
     #[pyfunction]
     fn sound(s: PyStrRef, vm: &VirtualMachine) -> PyResult<()> {
-        // let mut exists = true;
-        // SPRITES.with(|r| {
-        //     r.borrow_mut()
-        //         .execute(|r| match r.get_sound(s.borrow_value()) {
-        //             Some(sound) => sound.play(),
-        //             None => {
-        //                 exists = false;
-        //                 Ok(())
-        //             }
-        //         })
-        //         .map_err(|e| vm.new_runtime_error(e.to_string()))
-        // })?;
-        // if exists {
-        //     Ok(())
-        // } else {
-        //     Err(vm.new_lookup_error(format!("sound {:?} does not exist", s.borrow_value())))
-        // }
-        Ok(())
+        SPRITES.with(|r| {
+            let resources = r.borrow();
+            let sound = resources.get_sound(s.borrow_value()).ok_or_else(|| {
+                vm.new_lookup_error(format!("sound {:?} does not exist", s.borrow_value()))
+            })?;
+            sound
+                .play()
+                .map_err(|e| vm.new_runtime_error(e.to_string()))
+        })
     }
 
     enum RectOrPoint {

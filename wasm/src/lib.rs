@@ -12,8 +12,7 @@ pub fn start(module: String, width: i32, height: i32, frozen: Box<[u8]>) -> Resu
         entry_module: Some(module),
         frozen: Some(frozen),
         ..Default::default()
-    });
-    Ok(())
+    })
 }
 
 #[wasm_bindgen]
@@ -40,6 +39,5 @@ pub fn start_source(source: String, width: i32, height: i32) -> Result<(), JsVal
         entry_module: Some("run".to_owned()),
         frozen: Some(frozen),
         ..Default::default()
-    });
-    Ok(())
+    })
 }
